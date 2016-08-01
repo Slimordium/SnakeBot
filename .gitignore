@@ -1,0 +1,8 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Autonoceptor/bin/x86/Debug
+/Autonoceptor/obj/x86/Debug
+/Autonoceptor/obj/ARM/Debug
+/Autonoceptor/bin/ARM/Debug
