@@ -171,7 +171,7 @@ namespace SnakeBot
         double mapMin = -1, mapMax = 20;
         public void SetServoAngle(int servoNumber, double newAngle)
         {
-            var servoAngle = Math.Round(Map(newAngle, -180, 180, 3820, 3720), 1);
+            var servoAngle = Math.Round(Map(newAngle, -180, 180, 3720, 3880), 1);
 
             Debug.WriteLine($"{servoNumber} - {servoAngle}");
             

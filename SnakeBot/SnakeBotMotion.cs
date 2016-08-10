@@ -81,7 +81,7 @@ namespace SnakeBot{
             RCservo[7] = (alpha * Math.Sin(t + 7 * beta) + gamma);
 
             //increment speed
-            speed = SPEED_DEFAULT;
+            //speed = SPEED_DEFAULT;
 
             t += speed; //increment time, wrap around if necessary to prevent overflow
             if (t > 2 * Math.PI)
@@ -103,14 +103,14 @@ namespace SnakeBot{
 
             //ServoController.SetServoAngle(0, RCservo[0]);
 
-            ServoController.SetServoAngle(0, RCservo[0]);
-            ServoController.SetServoAngle(1, RCservo[1]);
-            ServoController.SetServoAngle(2, RCservo[2]);
-            ServoController.SetServoAngle(3, RCservo[3]);
-            ServoController.SetServoAngle(4, RCservo[4]);
-            ServoController.SetServoAngle(5, RCservo[5]);
-            ServoController.SetServoAngle(6, RCservo[6]);
-            ServoController.SetServoAngle(7, RCservo[7]);
+            ServoController.SetServoAngle(0, RCservo[7]);
+            ServoController.SetServoAngle(1, RCservo[6]);
+            ServoController.SetServoAngle(2, RCservo[5]);
+            ServoController.SetServoAngle(3, RCservo[4]);
+            ServoController.SetServoAngle(4, RCservo[3]);
+            ServoController.SetServoAngle(5, RCservo[2]);
+            ServoController.SetServoAngle(6, RCservo[1]);
+            ServoController.SetServoAngle(7, RCservo[0]);
 
         }
 

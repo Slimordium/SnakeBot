@@ -1,0 +1,244 @@
+﻿Andy Long, Clara Smart, and Michael Hwang's snake robot code.
+*/
+
+
+#include <18f4520.h>
+#device high_ints=TRUE        // this allows raised priority interrupts, which we need
+#fuses HS,NOLVP,NOWDT,NOPROTECT
+#use delay(clock=40000000)
+#use rs232(baud=9600, UART1) 
+
+#include <main.h>
+#include <math.h>
+
+/*
+Put your desired high duration here; 
+3200 is center  
+1000 is 90 deg right 
+5400 is 90 deg left
+*/
+int16 RCservo[7];  
+
+//use volatile keyword to avoid problems with optimizer
+volatile float a = A_DEFAULT;
+volatile float b = B_DEFAULT;
+volatile float c = C_DEFAULT;
+
+volatile float alpha;
+volatile float gamma;
+volatile float beta;
+volatile float speed = 0;
+volatile float prev_speed = SPEED_DEFAULT;
+float t = 0; 
+
+#INT_TIMER1 // designates that this is the routine to call when timer1 overflows
+//generates servo signals
+void ISR_20MS(){
+   volatile unsigned int16 time;
+   set_timer1(TMR1_20MS);		//set timer to trigger an interrupt 20ms later
+   SET_ALL_SERVOS(0b11111111);	//begin pulse for servo signal
+   time=get_timer1();			//poll timer
+   while(time < TMR1_2point25MS){	//end this loop after 2.25 ms
+      if (time > (RCservo[0] + TMR1_20MS)){	
+         output_low(SERVO_0);	//end the pulse when time is up
+      }
+      if (time > (RCservo[1] + TMR1_20MS)){
+         output_low(SERVO_1);
+      }
+      if (time > (RCservo[2] + TMR1_20MS)){
+         output_low(SERVO_2);
+      }
+      if (time > (RCservo[3] + TMR1_20MS)){
+         output_low(SERVO_3);
+      }
+      if (time > (RCservo[4] + TMR1_20MS)){
+         output_low(SERVO_4);
+      }
+      if (time > (RCservo[5] + TMR1_20MS)){
+         output_low(SERVO_5);
+      }
+      if (time > (RCservo[6] + TMR1_20MS)){
+         output_low(SERVO_6);
+      }
+      time=get_timer1();	//poll timer
+   }
+   SET_ALL_SERVOS(0);	//set all servos low in case some pins are still high
+
+    //3200 is center  //1000 is 90 deg right // 5400 is 90 deg left
+   /*
+   add value of sine wave with phase offset ((alpha*sin(t + X*beta), 
+   3200 for servo center position,
+   an adjustment value to compensate for offsets when mounting servo horn (SERVO_X_ADJ),
+   and bias (gamma) for turning.
+   */
+   RCservo[0]=(int16)(alpha*sin(t) + 3200 + SERVO_3_ADJ + gamma); 
+   RCservo[1]=(int16)(alpha*sin(t + 1*beta) + 3200 + SERVO_4_ADJ + gamma);
+   RCservo[2]=(int16)(alpha*sin(t + 2*beta) + 3200 + gamma + SERVO_5_ADJ);
+   RCservo[3]=(int16)(alpha*sin(t + 3*beta) + 3200 + gamma + SERVO_6_ADJ);
+   RCservo[4]=(int16)(alpha*sin(t + 4*beta) + 3200 + gamma + SERVO_7_ADJ);
+   RCservo[5]=(int16)(alpha*sin(t + 5*beta) + 3200 + gamma + SERVO_8_ADJ);
+   RCservo[6]=(int16)(alpha*sin(t + 6*beta) + 3200 + gamma + SERVO_9_ADJ);
+
+   t+= speed;	//increment time, wrap around if necessary to prevent overflow
+   if (t > 2*pi){
+      t = 0;
+   }
+   else if (t < 0){
+      t = 2*pi;
+   }
+}
+
+
+#INT_RDA HIGH    //High-Priority Interrupt triggered by USART Rx
+//parameter update
+void ISR_USART_RX(){
+   char input;
+   if (kbhit()){
+      input = getc();
+      switch(input){
+         case 'w': //accelerate
+            speed += 0.002;
+            break;
+         case 's': //decelerate
+            speed -= 0.002;
+            break;
+         case 'x': //pause motion
+            prev_speed = speed;
+            speed = 0;
+            break;
+         case 'z': //resume motion
+            speed = prev_speed;
+            break;
+         case 'c': //reverse speed
+            speed = -speed;
+            break;
+         case 'a': //increase left turn rate
+            c -= 1000;
+            gamma=-c/num_segments;
+            break;
+         case 'd': //increase right turn rate
+            c += 1000;
+            gamma=-c/num_segments;
+            break;
+         case 'f': //set turn rate to 0
+            c = C_DEFAULT;
+            gamma = 0;
+         case 't': //increase amplitude
+            a += 10; 
+            alpha=a*abs(sin(beta));
+            break;
+         case 'g': //decrease amplitude
+            a -= 10;
+            alpha=a*abs(sin(beta));
+            break;
+         case 'y': //increase phases in body
+            b += 0.1;
+            beta=b/num_segments;
+            alpha=a*abs(sin(beta));
+            break;
+         case 'h': //decrease phases in body
+            b -= 0.1;
+            beta=b/num_segments;
+            alpha=a*abs(sin(beta));
+            break;
+         case '1': //preset 1
+            a = A_DEFAULT;
+            b = B_default;
+            c = C_default;
+            gamma=-c/num_segments;
+            beta=b/num_segments;
+            alpha=a*abs(sin(beta));
+            speed=SPEED_DEFAULT;
+            break;  
+         case '2':  //preset 2
+            a = 1400;
+            b = 2*pi;
+            c = C_DEFAULT;
+            gamma=-c/num_segments;
+            beta=b/num_segments;
+            alpha=a*abs(sin(beta));
+            speed=SPEED_DEFAULT;
+            break;
+         case '3':  //preset 3
+            a = 1000;
+            b = 5*pi;
+            c = C_DEFAULT;
+            gamma=-c/num_segments;
+            beta=b/num_segments;
+            alpha=a*abs(sin(beta));
+            speed=SPEED_DEFAULT;
+            break;              
+         default:
+      }
+   }
+   return;
+}
+
+void main() {
+	//load default values
+   a = A_DEFAULT;
+   b = B_default;
+   c = C_default;
+   gamma=-c/num_segments;
+   beta=b/num_segments;
+   alpha=a*abs(sin(beta));
+   speed=0;
+   
+   setup_timer_1(T1_INTERNAL | T1_DIV_BY_4 );       
+   set_timer1(0);
+   
+   enable_interrupts(INT_TIMER1);	//enable Timer1 interrupt
+   enable_interrupts(INT_RDA);		//enable USART receive interrupt
+   enable_interrupts(GLOBAL);
+      
+   while (TRUE) {     
+
+   }
+}
+main.h
+#ifndef __MAIN_H__
+#define __MAIN_H__
+
+#define SET_ALL_SERVOS(x) output_d(x)
+
+/*
+This chart matches the pin on the PIC to the wire on the ribbon cable
+PIN WIRE IN USE
+--- ---- -------
+RD0  2
+RD1  3      *
+RD2  4      *
+RD3  5      *
+RD4  6      *
+RD5  7      *
+RD6  8      *
+RD7  9      *
+
+*/
+#define SERVO_3_ADJ 0
+#define SERVO_4_ADJ 300
+#define SERVO_5_ADJ (-150)
+#define SERVO_6_ADJ 75
+#define SERVO_7_ADJ (-200)
+#define SERVO_8_ADJ 100
+#define SERVO_9_ADJ (-150)
+
+#define SERVO_0 PIN_D1
+#define SERVO_1 PIN_D2
+#define SERVO_2 PIN_D3
+#define SERVO_3 PIN_D4
+#define SERVO_4 PIN_D5
+#define SERVO_5 PIN_D6
+#define SERVO_6 PIN_D7
+
+#define A_DEFAULT 1300
+#define B_DEFAULT 3*pi
+#define C_DEFAULT 0
+
+#define SPEED_DEFAULT 0.05
+#define OMEGA_DEFAULT 1
+#define num_segments 8
+
+#define TMR1_20MS 15536
+#define TMR1_2point25MS 15536 + 6250
+#endif
