@@ -142,7 +142,7 @@ namespace SnakeBot
                     }
                     else
                     {
-                        //if (!_isCollisionEvent)
+                        //if (!_isCollisionEvent) 
                         //    continue;
 
                         //_isCollisionEvent = false;

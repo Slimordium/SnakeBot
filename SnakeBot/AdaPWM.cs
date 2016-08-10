@@ -41,19 +41,21 @@ namespace SnakeBot
             //}
             //Self test
 
-            TestPins();
+            //TestPins();
         }
 
         public void TestPins()
         {
-            for (byte pwmnum = 0; pwmnum < 16; pwmnum++)
+            for (byte pwmnum = 8; pwmnum < 10; pwmnum++)
             {
+
                 for (ushort i = 4096; i > 0; i -= 4)
                 {
                     SetPin(pwmnum, i);
                 }
             }
-            SetAllPwm(4096, 0);
+            ushort number = 2500;
+            //SetAllPwm(number, 0);
         }
 
         /// <summary>
@@ -159,6 +161,42 @@ namespace SnakeBot
             }
         }
 
+        public static double Map(double x, double inMin, double inMax, double outMin, double outMax)
+        {
+            var r = (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+            return r;
+        }
+
+        double mapMin = -1, mapMax = 20;
+        public void SetServoAngle(int servoNumber, double newAngle)
+        {
+            //var servoAngle = Map(newAngle, mapMin, mapMax, 350, 450);
+            //var servoAngle = Map(newAngle, -180, 180, 200, 450);
+
+            
+
+
+            var servoAngle = Map(newAngle, -180, 180, 4096, 0);
+
+            var asdf = Math.Round(servoAngle, 0);
+            //Debug.WriteLine($"Servo {servoNumber} angle {(ushort)asdf} ");
+            //SetPwm((byte)servoNumber, 0, (ushort)asdf);
+
+            if (servoNumber == 0)
+            {
+                if (asdf > 6000)
+                {
+                    asdf = 1;
+                }
+                 
+                Debug.WriteLine($"Servo {servoNumber} angle {(ushort)asdf} ");
+                Debug.WriteLine($"newAngle {newAngle}");
+                SetPwm(8, 0, (ushort)asdf);
+                //SetPwm(13,  0, (ushort)asdf);
+                //SetPwm(15, 0, (ushort)asdf);
+            }
+        }
+
         internal void SetPwm(byte channel, ushort on, ushort off)
         {
             _pca9685.Write((byte)(Registers.LED0_ON_L + 4 * channel), (byte)(on & 0xFF));
@@ -169,17 +207,17 @@ namespace SnakeBot
 
         internal void SetAllPwm(ushort on, ushort off)
         {
-            _pca9685.Write((byte)Registers.ALL_LED_ON_L, (byte)(on & 0xFF));
-            _pca9685.Write((byte)Registers.ALL_LED_ON_H, (byte)(on >> 8));
-            _pca9685.Write((byte)Registers.ALL_LED_OFF_L, (byte)(off & 0xFF));
-            _pca9685.Write((byte)Registers.ALL_LED_OFF_H, (byte)(off >> 8));
+            //_pca9685.Write((byte)Registers.ALL_LED_ON_L, (byte)(on & 0xFF));
+            //_pca9685.Write((byte)Registers.ALL_LED_ON_H, (byte)(on >> 8));
+            //_pca9685.Write((byte)Registers.ALL_LED_OFF_L, (byte)(off & 0xFF));
+            //_pca9685.Write((byte)Registers.ALL_LED_OFF_H, (byte)(off >> 8));
         }
 
         internal void Reset()
         {
             _pca9685.Write((byte)Registers.MODE1, 0x0); // reset the device
-            Debug.WriteLine($"PCA9685 Frequency {SetDesiredFrequency(500)}");
-            SetAllPwm(4096, 0);//All off
+            //Debug.WriteLine($"PCA9685 Frequency {SetDesiredFrequency(500)}");
+            //SetAllPwm(4096, 0);//All off
         }
 
         internal double SetDesiredFrequency(double frequency)

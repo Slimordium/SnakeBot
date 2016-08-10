@@ -14,7 +14,7 @@ namespace SnakeBot
 
         public I2CDevice()
         {
-            _baseAddress = 0x40; //Not sure this is correct
+            _baseAddress = 0x41;
             _busSpeed = I2cBusSpeed.FastMode;
         }
 
@@ -29,7 +29,7 @@ namespace SnakeBot
                 Debug.WriteLine($"Could not find I2C device at {_baseAddress}");
                 return false;
             }
-
+ 
             _i2CDevice = await I2cDevice.FromIdAsync(devices[0].Id, settings);
 
             if (_i2CDevice == null)
