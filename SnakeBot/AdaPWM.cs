@@ -30,7 +30,6 @@ namespace SnakeBot
         internal async Task InitializeAsync()
         {
             await _pca9685.Initialize();
-            //if (await _pca9685.Open())
 
 
             Reset();
@@ -42,6 +41,8 @@ namespace SnakeBot
             //Self test
 
             //TestPins();
+
+            
         }
 
         public void TestPins()
@@ -170,31 +171,11 @@ namespace SnakeBot
         double mapMin = -1, mapMax = 20;
         public void SetServoAngle(int servoNumber, double newAngle)
         {
-            //var servoAngle = Map(newAngle, mapMin, mapMax, 350, 450);
-            //var servoAngle = Map(newAngle, -180, 180, 200, 450);
+            var servoAngle = Math.Round(Map(newAngle, -180, 180, 3820, 3720), 1);
 
+            Debug.WriteLine($"{servoNumber} - {servoAngle}");
             
-
-
-            var servoAngle = Map(newAngle, -180, 180, 4096, 0);
-
-            var asdf = Math.Round(servoAngle, 0);
-            //Debug.WriteLine($"Servo {servoNumber} angle {(ushort)asdf} ");
-            //SetPwm((byte)servoNumber, 0, (ushort)asdf);
-
-            if (servoNumber == 0)
-            {
-                if (asdf > 6000)
-                {
-                    asdf = 1;
-                }
-                 
-                Debug.WriteLine($"Servo {servoNumber} angle {(ushort)asdf} ");
-                Debug.WriteLine($"newAngle {newAngle}");
-                SetPwm(8, 0, (ushort)asdf);
-                //SetPwm(13,  0, (ushort)asdf);
-                //SetPwm(15, 0, (ushort)asdf);
-            }
+            SetPin(servoNumber, servoAngle);
         }
 
         internal void SetPwm(byte channel, ushort on, ushort off)
@@ -213,11 +194,30 @@ namespace SnakeBot
             //_pca9685.Write((byte)Registers.ALL_LED_OFF_H, (byte)(off >> 8));
         }
 
-        internal void Reset()
+        internal async Task Reset()
         {
             _pca9685.Write((byte)Registers.MODE1, 0x0); // reset the device
-            //Debug.WriteLine($"PCA9685 Frequency {SetDesiredFrequency(500)}");
-            //SetAllPwm(4096, 0);//All off
+            Debug.WriteLine($"PCA9685 Frequency {SetDesiredFrequency(53)}");
+
+            //Center all servos
+            SetPin(0, 3800);
+            await Task.Delay(20);
+            SetPin(1, 3800);
+            await Task.Delay(20);
+            SetPin(2, 3800);
+            await Task.Delay(20);
+            SetPin(3, 3800);
+            await Task.Delay(20);
+            SetPin(4, 3800);
+            await Task.Delay(20);
+            SetPin(5, 3800);
+            await Task.Delay(20);
+            SetPin(6, 3800);
+            await Task.Delay(20);
+            SetPin(7, 3800);
+            await Task.Delay(20);
+            SetPin(8, 3800);
+            await Task.Delay(20);
         }
 
         internal double SetDesiredFrequency(double frequency)
